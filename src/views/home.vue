@@ -1,109 +1,3 @@
-<script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import {
-  NCard,
-  NSpace,
-  NInput,
-  NInputNumber,
-  NSelect,
-  NButton,
-  NList,
-  NListItem,
-  NEmpty,
-  NTag,
-  NStatistic,
-  useMessage,
-  NGrid,
-  NGridItem,
-  NScrollbar,
-} from "naive-ui";
-
-interface Transaction {
-  id: number;
-  date: string;
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  category: string;
-}
-
-const message = useMessage();
-const transactions = ref<Transaction[]>([]);
-const description = ref("");
-const amount = ref<number | null>(null);
-const type = ref<"income" | "expense">("expense");
-const category = ref<string | null>(null);
-
-const categories = {
-  expense: ["飲食", "交通", "購物", "娛樂", "醫療", "其他"],
-  income: ["薪資", "獎金", "投資", "其他"],
-};
-
-const balance = computed(() => {
-  return transactions.value.reduce((sum: number, transaction: Transaction) => {
-    return (
-      sum +
-      (transaction.type === "income" ? transaction.amount : -transaction.amount)
-    );
-  }, 0);
-});
-
-const addTransaction = () => {
-  if (!description.value || amount.value === null || !category.value) {
-    message.error("請填寫所有必要欄位");
-    return;
-  }
-
-  transactions.value.push({
-    id: Date.now(),
-    date: new Date().toISOString().split("T")[0],
-    description: description.value,
-    amount: amount.value,
-    type: type.value,
-    category: category.value,
-  });
-
-  message.success("交易新增成功");
-
-  // 清空表單
-  description.value = "";
-  amount.value = null;
-  category.value = null;
-};
-
-const removeTransaction = (id: number) => {
-  transactions.value = transactions.value.filter(
-    (t: Transaction) => t.id !== id
-  );
-  message.success("交易刪除成功");
-};
-
-const typeOptions = [
-  { label: "支出", value: "expense" },
-  { label: "收入", value: "income" },
-];
-
-const categoryOptions = computed(() => {
-  return categories[type.value].map((cat) => ({
-    label: cat,
-    value: cat,
-  }));
-});
-
-const isSmallScreen = ref(false);
-
-onMounted(() => {
-  const handleResize = () => {
-    isSmallScreen.value = window.innerWidth <= 640;
-  };
-
-  handleResize();
-  window.addEventListener("resize", handleResize);
-});
-
-const isMobile = computed(() => isSmallScreen.value);
-</script>
-
 <template>
   <div class="expense-tracker">
     <n-space vertical size="large">
@@ -225,6 +119,96 @@ const isMobile = computed(() => isSmallScreen.value);
     </n-space>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useMessage } from "naive-ui";
+import { ref, computed, onMounted } from "vue";
+
+interface Transaction {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+}
+
+const message = useMessage();
+const transactions = ref<Transaction[]>([]);
+const description = ref("");
+const amount = ref<number | null>(null);
+const type = ref<"income" | "expense">("expense");
+const category = ref<string | null>(null);
+
+const categories = {
+  expense: ["飲食", "交通", "購物", "娛樂", "醫療", "其他"],
+  income: ["薪資", "獎金", "投資", "其他"],
+};
+
+const balance = computed(() => {
+  return transactions.value.reduce((sum: number, transaction: Transaction) => {
+    return (
+      sum +
+      (transaction.type === "income" ? transaction.amount : -transaction.amount)
+    );
+  }, 0);
+});
+
+const addTransaction = () => {
+  if (!description.value || amount.value === null || !category.value) {
+    message.error("請填寫所有必要欄位");
+    return;
+  }
+
+  transactions.value.push({
+    id: Date.now(),
+    date: new Date().toISOString().split("T")[0],
+    description: description.value,
+    amount: amount.value,
+    type: type.value,
+    category: category.value,
+  });
+
+  message.success("交易新增成功");
+
+  // 清空表單
+  description.value = "";
+  amount.value = null;
+  category.value = null;
+};
+
+const removeTransaction = (id: number) => {
+  transactions.value = transactions.value.filter(
+    (t: Transaction) => t.id !== id
+  );
+  message.success("交易刪除成功");
+};
+
+const typeOptions = [
+  { label: "支出", value: "expense" },
+  { label: "收入", value: "income" },
+];
+
+const categoryOptions = computed(() => {
+  return categories[type.value].map((cat) => ({
+    label: cat,
+    value: cat,
+  }));
+});
+
+const isSmallScreen = ref(false);
+
+onMounted(() => {
+  const handleResize = () => {
+    isSmallScreen.value = window.innerWidth <= 640;
+  };
+
+  handleResize();
+  window.addEventListener("resize", handleResize);
+});
+
+const isMobile = computed(() => isSmallScreen.value);
+</script>
 
 <style scoped>
 .expense-tracker {
