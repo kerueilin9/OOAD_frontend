@@ -10,7 +10,7 @@ interface Transaction {
 
 async function getTransactionList() {
   let token = localStorage.getItem("token");
-  token = import.meta.env.VITE_TOKEN;
+  // token = import.meta.env.VITE_TOKEN;
   const res = await axios.post(
     "http://localhost:8080/transaction/list",
     {},
@@ -25,7 +25,7 @@ async function getTransactionList() {
 
 async function addTransaction(params: Transaction) {
   let token = localStorage.getItem("token");
-  token = import.meta.env.VITE_TOKEN;
+  // token = import.meta.env.VITE_TOKEN;
   console.log(token);
   await axios.post("http://localhost:8080/transaction", params, {
     headers: {
@@ -36,7 +36,7 @@ async function addTransaction(params: Transaction) {
 
 async function editTransaction(id: number, params: Transaction) {
   let token = localStorage.getItem("token");
-  token = import.meta.env.VITE_TOKEN;
+  // token = import.meta.env.VITE_TOKEN;
   console.log(token);
   await axios.put(`http://localhost:8080/transaction/${id}`, params, {
     headers: {
@@ -47,7 +47,7 @@ async function editTransaction(id: number, params: Transaction) {
 
 async function deleteTransaction(id: number) {
   let token = localStorage.getItem("token");
-  token = import.meta.env.VITE_TOKEN;
+  // token = import.meta.env.VITE_TOKEN;
   console.log(token);
   await axios.delete(`http://localhost:8080/transaction/${id}`, {
     headers: {

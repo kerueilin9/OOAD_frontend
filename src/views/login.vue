@@ -1,11 +1,8 @@
 <template>
-  <div class="w-full h-screen flex justify-center items-center app-container">
-    <div class="w-1/2 max-w-xs px-3">
-      <div class="px-2 py-3">
-        <!-- <div> -->
-        <!--   <img :src="websiteConfig.loginImage" alt="" /> -->
-        <!-- </div> -->
-        <h1 class="text-center text-lg text-red-300">記帳系統</h1>
+  <div class="w-full h-screen flex justify-center app-container">
+    <div class="w-full max-w-lg px-3">
+      <div class="px-2 py-50">
+        <p class="text-center text-7xl text-gray-700">記帳系統</p>
       </div>
 
       <n-form
@@ -16,8 +13,8 @@
         :rules="rules"
         @submit.prevent="handleSubmit"
       >
-        <n-form-item path="account" label="帳號">
-          <n-input v-model:value="formValue.account" placeholder="請輸入帳號">
+        <n-form-item path="username">
+          <n-input v-model:value="formValue.username" placeholder="請輸入帳號">
             <template #prefix>
               <n-icon size="18" color="#808695">
                 <PersonOutline />
@@ -25,7 +22,7 @@
             </template>
           </n-input>
         </n-form-item>
-        <n-form-item path="password" label="密碼">
+        <n-form-item path="password">
           <n-input
             v-model:value="formValue.password"
             type="password"
@@ -53,9 +50,9 @@
       <n-button
         type="primary"
         attr-type="submit"
-        size="large"
         :loading="loading"
-        class="font-bold w-1/2"
+        @click="handleSubmit"
+        class="w-20"
       >
         登入
       </n-button>
@@ -67,6 +64,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useMessage } from "naive-ui";
+import { login } from "@/api/auth";
 import type { FormRules } from "naive-ui";
 import { PersonOutline, LockClosedOutline } from "@vicons/ionicons5";
 
@@ -77,12 +75,12 @@ const autoLogin = ref(false);
 const formRef = ref();
 
 const formValue = ref({
-  account: "",
+  username: "",
   password: "",
 });
 
 const rules: FormRules = {
-  account: [
+  username: [
     {
       required: true,
       message: "請輸入帳號",
@@ -108,12 +106,13 @@ const handleSubmit = async () => {
     loading.value = true;
     await formRef.value?.validate();
 
-    // TODO: 這裡添加實際的登入API調用
-    // 模擬登入成功
+    const response = await login(formValue.value);
+    const token = response.data;
+
     setTimeout(() => {
       message.success("登入成功");
-      localStorage.setItem("isAuthenticated", "true");
-      router.push("/");
+      localStorage.setItem("token", token);
+      router.push("/OOAD/home");
     }, 1000);
   } catch (errors) {
     message.error("請檢查輸入的內容");
@@ -124,13 +123,9 @@ const handleSubmit = async () => {
 </script>
 
 <style>
-.test {
-  color: #ee2626;
-}
-
 .app-container {
   height: 100vh;
   background-color: #f5f5f5;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 </style>
