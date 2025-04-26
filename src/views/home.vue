@@ -14,191 +14,294 @@
                 </n-statistic>
               </n-card>
               <n-card title="新增交易" :bordered="false" class="form-card">
-                <n-space vertical :size="12">
-                  <n-select
-                    v-model:value="type"
-                    :options="typeOptions"
-                    placeholder="選擇類型"
-                  />
-                  <n-input
-                    v-model:value="description"
-                    type="text"
-                    placeholder="輸入交易描述"
-                  />
-                  <n-input-number
-                    v-model:value="amount"
-                    placeholder="輸入金額"
-                    :min="0"
-                    :precision="2"
-                    style="width: 100%"
-                  />
-                  <n-select
-                    v-model:value="category"
-                    :options="categoryOptions"
-                    placeholder="選擇分類"
-                  />
-                  <n-button
-                    type="primary"
-                    block
-                    @click="addTransaction"
-                    :disabled="!description || amount === null || !category"
-                  >
-                    新增交易
-                  </n-button>
-                </n-space>
+                <n-form
+                  class="text-center"
+                  ref="basicFormRef"
+                  require-mark-placement="left"
+                  label-placement="left"
+                  :rules="basicRules"
+                  :model="basicForm"
+                >
+                  <n-form-item path="value">
+                    <n-input-number
+                      v-model:value="basicForm.amount"
+                      placeholder="輸入金額"
+                      :min="0"
+                      style="width: 100%"
+                    />
+                  </n-form-item>
+                  <n-form-item path="type">
+                    <n-radio-group
+                      v-model:value="basicForm.type"
+                      name="type"
+                      style="width: 100%"
+                    >
+                      <n-radio-button value="EXPENSE" style="width: 50%">
+                        支出
+                      </n-radio-button>
+                      <n-radio-button value="INCOME" style="width: 50%">
+                        收入
+                      </n-radio-button>
+                    </n-radio-group>
+                  </n-form-item>
+                  <n-form-item path="category">
+                    <n-select
+                      size="large"
+                      class="w-full custom-select-font-size"
+                      v-model:value="basicForm.category"
+                      :options="categories"
+                      placeholder="交易種類"
+                    />
+                  </n-form-item>
+                  <n-form-item path="note">
+                    <n-input
+                      size="large"
+                      class="w-full custom-select-font-size"
+                      v-model:value="basicForm.note"
+                      placeholder="描述"
+                    />
+                  </n-form-item>
+                </n-form>
+                <n-button
+                  type="primary"
+                  block
+                  @click="handleSubmit"
+                  :disabled="!basicForm.amount || basicForm.type === null"
+                >
+                  新增交易
+                </n-button>
               </n-card>
             </n-space>
           </n-grid-item>
 
           <n-grid-item :span="2">
             <n-card title="交易歷史" :bordered="false" class="history-card">
-              <template v-if="transactions.length === 0">
-                <n-empty description="尚無交易記錄" />
-              </template>
-              <n-scrollbar style="max-height: calc(100vh - 200px)" v-else>
-                <n-list>
-                  <n-list-item
-                    v-for="transaction in transactions"
-                    :key="transaction.id"
-                  >
-                    <n-space
-                      justify="space-between"
-                      align="center"
-                      style="width: 100%"
-                    >
-                      <n-space vertical size="small" style="max-width: 60%">
-                        <span class="transaction-description">
-                          {{ transaction.description }}
-                        </span>
-                        <n-space size="small">
-                          <n-tag
-                            :type="
-                              transaction.type === 'income'
-                                ? 'success'
-                                : 'error'
-                            "
-                          >
-                            {{
-                              transaction.type === "income" ? "收入" : "支出"
-                            }}
-                          </n-tag>
-                          <n-tag>{{ transaction.category }}</n-tag>
-                          <span class="transaction-date">{{
-                            transaction.date
-                          }}</span>
-                        </n-space>
-                      </n-space>
-                      <n-space align="center">
-                        <span
-                          :class="{
-                            'amount-text': true,
-                            'income-text': transaction.type === 'income',
-                            'expense-text': transaction.type === 'expense',
-                          }"
-                        >
-                          {{ transaction.type === "income" ? "+" : "-" }}
-                          {{ transaction.amount.toFixed(2) }}
-                        </span>
-                        <n-button
-                          circle
-                          type="error"
-                          size="small"
-                          @click="removeTransaction(transaction.id)"
-                        >
-                          ×
-                        </n-button>
-                      </n-space>
-                    </n-space>
-                  </n-list-item>
-                </n-list>
-              </n-scrollbar>
+              <n-data-table
+                :row-key="(row) => row.id"
+                :columns="columns"
+                :data="data"
+                :pagination="{
+                  pageSize: 10,
+                }"
+              />
             </n-card>
           </n-grid-item>
         </n-grid>
       </n-card>
     </n-space>
   </div>
+  <EditTransactionModal
+    v-model:showModal="isShowModal"
+    v-model:transactionData="transactionData"
+  />
 </template>
 
 <script setup lang="ts">
-import { useMessage } from "naive-ui";
-import { ref, computed, onMounted } from "vue";
+import { FormInst, FormRules, NButton, useMessage } from "naive-ui";
+import { ref, computed, onMounted, h } from "vue";
+import type { DataTableColumns } from "naive-ui";
+import {
+  addTransaction,
+  deleteTransaction,
+  getTransactionList,
+} from "@/api/transaction";
+import EditTransactionModal from "@/components/editTransactionModal.vue";
+
+const message = useMessage();
+const basicFormRef = ref<FormInst | null>(null);
+const submitLoading = ref(false);
+const data = ref<RowData[]>([]);
+const isShowModal = ref(false);
+const transactionData = ref<Transaction | null>(null);
 
 interface Transaction {
   id: number;
-  date: string;
-  description: string;
+  date: Date;
+  note: string;
   amount: number;
-  type: "income" | "expense";
+  type: "INCOME" | "EXPENSE";
   category: string;
 }
 
-const message = useMessage();
-const transactions = ref<Transaction[]>([]);
-const description = ref("");
-const amount = ref<number | null>(null);
-const type = ref<"income" | "expense">("expense");
-const category = ref<string | null>(null);
+const consumptionCategories = [
+  { label: "飲食", value: "FOOD" },
+  { label: "交通", value: "TRANSPORT" },
+  { label: "購物", value: "SHOPPING" },
+  { label: "娛樂", value: "ENTERTAINMENT" },
+  { label: "教育", value: "EDUCATION" },
+  { label: "醫療", value: "HEALTH" },
+  { label: "投資", value: "INVESTMENT" },
+  { label: "其他", value: "OTHER" },
+];
 
-const categories = {
-  expense: ["飲食", "交通", "購物", "娛樂", "醫療", "其他"],
-  income: ["薪資", "獎金", "投資", "其他"],
+const incomeCategories = [
+  { label: "薪資", value: "SALARY" },
+  { label: "投資", value: "INVESTMENT" },
+  { label: "其他", value: "OTHER" },
+];
+
+const initialBasicForm = {
+  amount: null,
+  category: null,
+  type: null,
+  note: null,
+};
+const basicForm = ref<{
+  amount: number | null;
+  category: string | null;
+  type: "INCOME" | "EXPENSE" | null;
+  note: string | null;
+}>({ ...initialBasicForm });
+
+const basicRules: FormRules = {
+  amount: {
+    required: true,
+    trigger: ["blur", "input", "change"],
+    type: "number",
+    validator: (rule, value: number) => {
+      if (value === null || value === undefined || value === 0) {
+        return Promise.reject("必填");
+      }
+      return Promise.resolve();
+    },
+  },
+  type: {
+    required: true,
+    trigger: ["blur", "input", "change"],
+    type: "string",
+    validator: (rule, value: string) => {
+      if (value === null || value === undefined || value === "") {
+        return Promise.reject("必填");
+      }
+      return Promise.resolve();
+    },
+  },
 };
 
+interface RowData {
+  id: number;
+  type: "INCOME" | "EXPENSE";
+  amount: number;
+  date: Date;
+  category: string;
+  note: string;
+}
+
+const columns: DataTableColumns<RowData> = [
+  {
+    width: 50,
+    title: "ID",
+    key: "id",
+  },
+  {
+    title: "金額",
+    key: "amount",
+  },
+  {
+    title: "收支類型",
+    key: "type",
+  },
+  {
+    title: "種類",
+    key: "category",
+  },
+  {
+    title: "日期",
+    key: "date",
+  },
+  {
+    width: 100,
+    ellipsis: true,
+    title: "備註",
+    key: "note",
+  },
+  {
+    title: "操作",
+    key: "actions",
+    render(row) {
+      return [
+        h(
+          NButton,
+          {
+            size: "small",
+            onClick: () => {
+              editTransaction(row.id);
+            },
+          },
+          { default: () => "編輯" }
+        ),
+        h(
+          NButton,
+          {
+            size: "small",
+            type: "error",
+            onClick: () => {
+              removeTransaction(row.id);
+            },
+          },
+          { default: () => "刪除" }
+        ),
+      ];
+    },
+  },
+];
+
+const categories = computed(() => {
+  return basicForm.value.type === "INCOME"
+    ? incomeCategories
+    : consumptionCategories;
+});
+
 const balance = computed(() => {
-  return transactions.value.reduce((sum: number, transaction: Transaction) => {
-    return (
-      sum +
-      (transaction.type === "income" ? transaction.amount : -transaction.amount)
-    );
+  return data.value.reduce((sum: number, item: any) => {
+    return sum + (item.type === "INCOME" ? item.amount : -item.amount);
   }, 0);
 });
 
-const addTransaction = () => {
-  if (!description.value || amount.value === null || !category.value) {
-    message.error("請填寫所有必要欄位");
-    return;
+const handleSubmit = async () => {
+  try {
+    await basicFormRef.value.validate();
+    submitLoading.value = true;
+    const payload = {
+      date: new Date().toISOString().split("T")[0],
+      ...basicForm.value,
+    };
+
+    await addTransaction(payload);
+    message.success("交易新增成功");
+  } catch (err) {
+    console.log(err);
   }
-
-  transactions.value.push({
-    id: Date.now(),
-    date: new Date().toISOString().split("T")[0],
-    description: description.value,
-    amount: amount.value,
-    type: type.value,
-    category: category.value,
-  });
-
-  message.success("交易新增成功");
-
-  // 清空表單
-  description.value = "";
-  amount.value = null;
-  category.value = null;
 };
 
-const removeTransaction = (id: number) => {
-  transactions.value = transactions.value.filter(
-    (t: Transaction) => t.id !== id
-  );
-  message.success("交易刪除成功");
+const editTransaction = (id: number) => {
+  isShowModal.value = true;
+  transactionData.value = data.value.find((t: Transaction) => t.id === id);
 };
 
-const typeOptions = [
-  { label: "支出", value: "expense" },
-  { label: "收入", value: "income" },
-];
-
-const categoryOptions = computed(() => {
-  return categories[type.value].map((cat) => ({
-    label: cat,
-    value: cat,
-  }));
-});
+const removeTransaction = async (id: number) => {
+  try {
+    await deleteTransaction(id);
+    message.success("交易刪除成功");
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 const isSmallScreen = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
+  const res = await getTransactionList();
+  data.value = res.data;
+  // data.value = res.data.map((item: Transaction) => ({
+  //   id: item.id,
+  //   type: item.type,
+  //   amount: item.amount,
+  //   date: new Date(item.date).toLocaleDateString("zh-TW"),
+  //   category: item.category,
+  //   note: item.note,
+  // }));
+
   const handleResize = () => {
     isSmallScreen.value = window.innerWidth <= 640;
   };
@@ -212,7 +315,6 @@ const isMobile = computed(() => isSmallScreen.value);
 
 <style scoped>
 .expense-tracker {
-  height: 100%;
   padding: 24px;
 }
 
@@ -234,7 +336,7 @@ const isMobile = computed(() => isSmallScreen.value);
 }
 
 .history-card {
-  height: calc(100vh - 48px);
+  height: calc(100vh - 200px);
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
