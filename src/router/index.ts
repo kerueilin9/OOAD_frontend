@@ -55,7 +55,11 @@ export const HomeRoute: RouteRecordRaw = {
   ],
 };
 
-export const constantRouter: RouteRecordRaw[] = [HomeRoute, TestRoute];
+export const constantRouter: RouteRecordRaw[] = [
+  HomeRoute,
+  TestRoute,
+  LoginRoute,
+];
 
 const router = createRouter({
   history: createWebHistory(),

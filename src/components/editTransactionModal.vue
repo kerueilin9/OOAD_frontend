@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { addTransaction, editTransaction } from "@/api/transaction";
+import { editTransaction } from "@/api/transaction";
 import { FormInst, FormRules, useMessage } from "naive-ui";
 import { computed, onMounted, ref, watch } from "vue";
 
