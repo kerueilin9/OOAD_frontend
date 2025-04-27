@@ -78,6 +78,7 @@
             <n-card title="交易歷史" :bordered="false" class="history-card">
               <n-data-table
                 :row-key="(row) => row.id"
+                :single-line="false"
                 :columns="columns"
                 :data="data"
                 :pagination="{
@@ -210,7 +211,6 @@ const columns: DataTableColumns<RowData> = [
     key: "date",
   },
   {
-    width: 100,
     ellipsis: true,
     title: "備註",
     key: "note",

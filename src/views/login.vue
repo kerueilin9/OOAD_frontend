@@ -95,7 +95,7 @@ const rules: FormRules = {
     },
     {
       min: 4,
-      message: "密碼長度至少為6位",
+      message: "密碼長度至少為4位",
       trigger: ["blur", "input"],
     },
   ],
