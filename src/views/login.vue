@@ -108,7 +108,10 @@ const handleSubmit = async () => {
 
     const response = await login(formValue.value);
     const token = response.data;
-
+    if (token == "帳號密碼錯誤") {
+      message.error("登入失敗，請檢查帳號密碼");
+      return;
+    }
     setTimeout(() => {
       message.success("登入成功");
       localStorage.setItem("token", token);

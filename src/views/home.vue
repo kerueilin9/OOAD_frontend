@@ -1,7 +1,12 @@
 <template>
   <div class="expense-tracker">
     <n-space vertical size="large">
-      <n-card title="記帳工具" :bordered="false" class="main-card">
+      <n-card :bordered="false" class="main-card">
+        <template #header>
+          <n-space vertical :size="8">
+            <p class="text-2xl text-center font-bold">記帳工具</p>
+          </n-space>
+        </template>
         <n-grid :cols="3" :x-gap="24">
           <n-grid-item :span="1">
             <n-space vertical :size="24">
@@ -15,7 +20,6 @@
               </n-card>
               <n-card title="新增交易" :bordered="false" class="form-card">
                 <n-form
-                  class="text-center"
                   ref="basicFormRef"
                   require-mark-placement="left"
                   label-placement="left"
@@ -46,8 +50,7 @@
                   </n-form-item>
                   <n-form-item path="category">
                     <n-select
-                      size="large"
-                      class="w-full custom-select-font-size"
+                      class="w-full"
                       v-model:value="basicForm.category"
                       :options="categories"
                       placeholder="交易種類"
@@ -55,8 +58,7 @@
                   </n-form-item>
                   <n-form-item path="note">
                     <n-input
-                      size="large"
-                      class="w-full custom-select-font-size"
+                      class="w-full"
                       v-model:value="basicForm.note"
                       placeholder="描述"
                     />
@@ -98,7 +100,8 @@
 </template>
 
 <script setup lang="ts">
-import { FormInst, FormRules, NButton, useMessage } from "naive-ui";
+import { useRouter } from "vue-router";
+import { FormInst, FormRules, NButton, NTag, useMessage } from "naive-ui";
 import { ref, computed, onMounted, h } from "vue";
 import type { DataTableColumns } from "naive-ui";
 import {
@@ -107,7 +110,12 @@ import {
   getTransactionList,
 } from "@/api/transaction";
 import EditTransactionModal from "@/components/editTransactionModal.vue";
+import {
+  consumptionCategories,
+  incomeCategories,
+} from "@/constants/categories";
 
+const router = useRouter();
 const message = useMessage();
 const basicFormRef = ref<FormInst | null>(null);
 const submitLoading = ref(false);
@@ -124,27 +132,10 @@ interface Transaction {
   category: string;
 }
 
-const consumptionCategories = [
-  { label: "飲食", value: "FOOD" },
-  { label: "交通", value: "TRANSPORT" },
-  { label: "購物", value: "SHOPPING" },
-  { label: "娛樂", value: "ENTERTAINMENT" },
-  { label: "教育", value: "EDUCATION" },
-  { label: "醫療", value: "HEALTH" },
-  { label: "投資", value: "INVESTMENT" },
-  { label: "其他", value: "OTHER" },
-];
-
-const incomeCategories = [
-  { label: "薪資", value: "SALARY" },
-  { label: "投資", value: "INVESTMENT" },
-  { label: "其他", value: "OTHER" },
-];
-
 const initialBasicForm = {
   amount: null,
   category: null,
-  type: null,
+  type: "EXPENSE" as const,
   note: null,
 };
 const basicForm = ref<{
@@ -190,25 +181,38 @@ interface RowData {
 
 const columns: DataTableColumns<RowData> = [
   {
-    width: 50,
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "金額",
-    key: "amount",
+    title: "日期",
+    key: "date",
   },
   {
     title: "收支類型",
     key: "type",
+    render(row) {
+      return h(
+        NTag,
+        {
+          type: row.type === "INCOME" ? "success" : "error",
+        },
+        { default: () => (row.type === "INCOME" ? "收入" : "支出") }
+      );
+    },
   },
   {
     title: "種類",
     key: "category",
   },
   {
-    title: "日期",
-    key: "date",
+    title: "金額",
+    key: "amount",
+    render(row) {
+      return h(
+        "span",
+        {
+          class: row.type === "INCOME" ? "text-green-600" : "text-red-600",
+        },
+        `${row.type === "INCOME" ? "+" : "-"}${row.amount}`
+      );
+    },
   },
   {
     ellipsis: true,
@@ -291,8 +295,9 @@ const removeTransaction = async (id: number) => {
 const isSmallScreen = ref(false);
 
 onMounted(async () => {
-  const res = await getTransactionList();
+  const res = await getTransactionList({});
   data.value = res.data;
+  console.log(res.data);
   // data.value = res.data.map((item: Transaction) => ({
   //   id: item.id,
   //   type: item.type,

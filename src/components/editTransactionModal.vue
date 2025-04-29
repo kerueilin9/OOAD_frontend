@@ -9,7 +9,6 @@
     >
       <n-card title="編輯交易" :bordered="false" class="form-card">
         <n-form
-          class="text-center"
           ref="basicFormRef"
           require-mark-placement="left"
           label-placement="left"
@@ -73,6 +72,10 @@
 import { editTransaction } from "@/api/transaction";
 import { FormInst, FormRules, useMessage } from "naive-ui";
 import { computed, onMounted, ref, watch } from "vue";
+import {
+  consumptionCategories,
+  incomeCategories,
+} from "@/constants/categories";
 
 const showModal = defineModel("showModal");
 const transactionData = defineModel<Transaction>("transactionData", {
@@ -98,29 +101,13 @@ interface Transaction {
   category: string;
 }
 
-const consumptionCategories = [
-  { label: "飲食", value: "FOOD" },
-  { label: "交通", value: "TRANSPORT" },
-  { label: "購物", value: "SHOPPING" },
-  { label: "娛樂", value: "ENTERTAINMENT" },
-  { label: "教育", value: "EDUCATION" },
-  { label: "醫療", value: "HEALTH" },
-  { label: "投資", value: "INVESTMENT" },
-  { label: "其他", value: "OTHER" },
-];
-
-const incomeCategories = [
-  { label: "薪資", value: "SALARY" },
-  { label: "投資", value: "INVESTMENT" },
-  { label: "其他", value: "OTHER" },
-];
-
 const initialBasicForm = {
   amount: null,
   category: null,
   type: null,
   note: null,
 };
+
 const basicForm = ref<{
   amount: number | null;
   category: string | null;

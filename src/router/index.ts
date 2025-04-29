@@ -11,12 +11,22 @@ export const TestRoute: RouteRecordRaw = {
   },
 };
 
+export const RootRoute: RouteRecordRaw = {
+  path: "/",
+  name: "Root",
+  redirect: `${path}/home`,
+  meta: {
+    title: "Root",
+  },
+};
+
 export const LoginRoute: RouteRecordRaw = {
   path: `${path}/login`,
   name: "Login",
   component: () => import("@/views/login.vue"),
   meta: {
     title: "登入",
+    public: true,
   },
 };
 
@@ -30,6 +40,7 @@ export const HomeRoute: RouteRecordRaw = {
       component: () => import("@/views/home.vue"),
       meta: {
         title: "首頁",
+        requiresAuth: true,
       },
     },
     {
@@ -38,6 +49,7 @@ export const HomeRoute: RouteRecordRaw = {
       component: () => import("@/views/report.vue"),
       meta: {
         title: "帳務報表",
+        requiresAuth: true,
       },
     },
     {
@@ -46,19 +58,30 @@ export const HomeRoute: RouteRecordRaw = {
       component: () => import("@/views/settings.vue"),
       meta: {
         title: "設定",
+        requiresAuth: true,
       },
     },
     {
-      path: "",
-      redirect: "home",
+      path: "403",
+      name: "403",
+      component: () => import("@/views/exception/403.vue"),
+      meta: {
+        title: "403",
+      },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "NotFound",
+      component: () => import("@/views/exception/404.vue"),
     },
   ],
 };
 
 export const constantRouter: RouteRecordRaw[] = [
-  HomeRoute,
-  TestRoute,
   LoginRoute,
+  HomeRoute,
+  RootRoute,
+  TestRoute,
 ];
 
 const router = createRouter({
