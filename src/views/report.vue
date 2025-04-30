@@ -170,9 +170,9 @@ const columns: DataTableColumns<Transaction> = [
       return h(
         NTag,
         {
-          type: row.type === "income" ? "success" : "error",
+          type: row.type === "INCOME" ? "success" : "error",
         },
-        { default: () => (row.type === "income" ? "收入" : "支出") }
+        { default: () => (row.type === "INCOME" ? "收入" : "支出") }
       );
     },
   },
@@ -189,9 +189,9 @@ const columns: DataTableColumns<Transaction> = [
       return h(
         "span",
         {
-          class: row.type === "income" ? "text-green-600" : "text-red-600",
+          class: row.type === "INCOME" ? "text-green-600" : "text-red-600",
         },
-        `${row.type === "income" ? "+" : "-"}${row.amount.toFixed(2)}`
+        `${row.type === "INCOME" ? "+" : "-"}${row.amount.toFixed(2)}`
       );
     },
   },
