@@ -15,7 +15,7 @@
           :rules="basicRules"
           :model="basicForm"
         >
-          <n-form-item path="value">
+          <n-form-item path="amount">
             <n-input-number
               v-model:value="basicForm.amount"
               placeholder="輸入金額"
@@ -91,6 +91,9 @@ const transactionData = defineModel<Transaction>("transactionData", {
 const message = useMessage();
 const basicFormRef = ref<FormInst | null>(null);
 const submitLoading = ref(false);
+const props = defineProps<{
+  updateData: (data: Transaction) => void;
+}>();
 
 interface Transaction {
   id: number;
@@ -122,7 +125,7 @@ const basicRules: FormRules = {
     type: "number",
     validator: (rule, value: number) => {
       if (value === null || value === undefined || value === 0) {
-        return Promise.reject("必填");
+        return Promise.reject("不可為0");
       }
       return Promise.resolve();
     },
@@ -155,8 +158,10 @@ const handleSubmit = async () => {
       ...basicForm.value,
     };
 
-    await editTransaction(transactionData.value.id, payload);
+    const res = await editTransaction(transactionData.value.id, payload);
+    props.updateData(res.data);
     message.success("交易編輯成功");
+    showModal.value = false;
   } catch (err) {
     console.log(err);
   }

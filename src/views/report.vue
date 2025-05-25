@@ -19,6 +19,10 @@
               :options="typeOptions"
               placeholder="選擇交易類型"
               clearable
+              :on-update:value="(value: string) => {
+                filterForm.category = null;
+                filterForm.type = value;
+              }"
             />
           </n-form-item>
           <n-form-item label="分類" path="category" class="max-w-lg">
@@ -57,8 +61,8 @@
               <n-slider
                 :value="[filterForm.minAmount, filterForm.maxAmount]"
                 range
-                :step="1"
-                :max="10000"
+                :step="10"
+                :max="100000"
                 :on-update:value="(value: number[]) => {
                   filterForm.minAmount = value[0] > value[1] ? value[1] : value[0];
                   filterForm.maxAmount = value[1] > value[0] ? value[1] : value[0];
@@ -78,8 +82,10 @@
               </n-space>
             </div>
           </n-form-item>
-          <n-form-item>
-            <n-button type="primary" @click="handleFilter">篩選</n-button>
+          <n-form-item label="-" class="max-w-lg" label-style="font-size: 0">
+            <n-button type="primary" @click="handleFilter" class="ml-2"
+              >篩選</n-button
+            >
           </n-form-item>
         </n-form>
 
@@ -96,6 +102,7 @@
   <EditTransactionModal
     v-model:showModal="isShowModal"
     v-model:transactionData="transactionData"
+    :updateData="updateData"
   />
 </template>
 
@@ -111,6 +118,7 @@ import {
 import EditTransactionModal from "@/components/editTransactionModal.vue";
 import { deleteTransaction, getTransactionList } from "@/api/transaction";
 import { start } from "repl";
+import { CategoryMap } from "@/enums/categoryEnum";
 
 const router = useRouter();
 const message = useMessage();
@@ -133,8 +141,8 @@ const initialFilterForm = {
   category: null,
   startDate: null,
   endDate: null,
-  minAmount: 0,
-  maxAmount: 10000,
+  minAmount: null,
+  maxAmount: null,
 };
 
 const filterForm = ref<{
@@ -180,6 +188,9 @@ const columns: DataTableColumns<Transaction> = [
     title: "分類",
     key: "category",
     width: 100,
+    render(row) {
+      return h(NTag, {}, { default: () => `${CategoryMap.get(row.category)}` });
+    },
   },
   {
     title: "金額",
@@ -243,6 +254,15 @@ const pagination = ref({
 
 const loading = ref(false);
 const filteredTransactions = ref<Transaction[]>([]);
+
+const updateData = (updatedTransaction: Transaction) => {
+  const index = filteredTransactions.value.findIndex(
+    (t: Transaction) => t.id === updatedTransaction.id
+  );
+  if (index !== -1) {
+    filteredTransactions.value[index] = updatedTransaction;
+  }
+};
 
 const handleFilter = async () => {
   loading.value = true;

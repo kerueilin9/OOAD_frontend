@@ -19,11 +19,13 @@ interface TransactionFilter {
 }
 
 async function addTransaction(params: Transaction) {
-  await api.post("/transaction", params);
+  const res = await api.post("/transaction", params);
+  return res;
 }
 
 async function editTransaction(id: number, params: Transaction) {
-  await api.put(`/transaction/${id}`, params);
+  const res = await api.put(`/transaction/${id}`, params);
+  return res;
 }
 
 async function deleteTransaction(id: number) {

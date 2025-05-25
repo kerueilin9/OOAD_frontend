@@ -26,7 +26,7 @@
                   :rules="basicRules"
                   :model="basicForm"
                 >
-                  <n-form-item path="value">
+                  <n-form-item path="amount">
                     <n-input-number
                       v-model:value="basicForm.amount"
                       placeholder="輸入金額"
@@ -39,6 +39,12 @@
                       v-model:value="basicForm.type"
                       name="type"
                       style="width: 100%"
+                      :on-update:value="
+                        (value) => {
+                          basicForm.category = null;
+                          basicForm.type = value;
+                        }
+                      "
                     >
                       <n-radio-button value="EXPENSE" style="width: 50%">
                         支出
@@ -96,6 +102,7 @@
   <EditTransactionModal
     v-model:showModal="isShowModal"
     v-model:transactionData="transactionData"
+    :updateData="updateData"
   />
 </template>
 
@@ -104,6 +111,7 @@ import { useRouter } from "vue-router";
 import { FormInst, FormRules, NButton, NTag, useMessage } from "naive-ui";
 import { ref, computed, onMounted, h } from "vue";
 import type { DataTableColumns } from "naive-ui";
+import { CategoryMap } from "@/enums/categoryEnum";
 import {
   addTransaction,
   deleteTransaction,
@@ -119,7 +127,7 @@ const router = useRouter();
 const message = useMessage();
 const basicFormRef = ref<FormInst | null>(null);
 const submitLoading = ref(false);
-const data = ref<RowData[]>([]);
+const data = ref<Transaction[]>([]);
 const isShowModal = ref(false);
 const transactionData = ref<Transaction | null>(null);
 
@@ -152,7 +160,7 @@ const basicRules: FormRules = {
     type: "number",
     validator: (rule, value: number) => {
       if (value === null || value === undefined || value === 0) {
-        return Promise.reject("必填");
+        return Promise.reject("不能為0");
       }
       return Promise.resolve();
     },
@@ -168,18 +176,20 @@ const basicRules: FormRules = {
       return Promise.resolve();
     },
   },
+  category: {
+    required: true,
+    trigger: ["blur", "input", "change"],
+    type: "string",
+    validator: (rule, value: string) => {
+      if (value === null || value === undefined || value === "") {
+        return Promise.reject("必填");
+      }
+      return Promise.resolve();
+    },
+  },
 };
 
-interface RowData {
-  id: number;
-  type: "INCOME" | "EXPENSE";
-  amount: number;
-  date: Date;
-  category: string;
-  note: string;
-}
-
-const columns: DataTableColumns<RowData> = [
+const columns: DataTableColumns<Transaction> = [
   {
     title: "日期",
     key: "date",
@@ -200,6 +210,9 @@ const columns: DataTableColumns<RowData> = [
   {
     title: "種類",
     key: "category",
+    render(row) {
+      return h(NTag, {}, { default: () => `${CategoryMap.get(row.category)}` });
+    },
   },
   {
     title: "金額",
@@ -262,6 +275,15 @@ const balance = computed(() => {
   }, 0);
 });
 
+const updateData = (updatedTransaction: Transaction) => {
+  const index = data.value.findIndex(
+    (t: Transaction) => t.id === updatedTransaction.id
+  );
+  if (index !== -1) {
+    data.value[index] = updatedTransaction;
+  }
+};
+
 const handleSubmit = async () => {
   try {
     await basicFormRef.value.validate();
@@ -271,7 +293,8 @@ const handleSubmit = async () => {
       ...basicForm.value,
     };
 
-    await addTransaction(payload);
+    const res = await addTransaction(payload);
+    data.value.push(res.data);
     message.success("交易新增成功");
   } catch (err) {
     console.log(err);
@@ -286,6 +309,7 @@ const editTransaction = (id: number) => {
 const removeTransaction = async (id: number) => {
   try {
     await deleteTransaction(id);
+    data.value = data.value.filter((item: Transaction) => item.id !== id);
     message.success("交易刪除成功");
   } catch (err) {
     console.log(err);
@@ -341,7 +365,7 @@ const isMobile = computed(() => isSmallScreen.value);
 }
 
 .history-card {
-  height: calc(100vh - 200px);
+  min-height: calc(100vh - 200px);
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
