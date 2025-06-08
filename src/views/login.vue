@@ -57,7 +57,9 @@
         登入
       </n-button>
       <div class="mt-4 text-center">
-        <router-link to="/OOAD/register" class="underline text-blue-500">還沒有帳號？註冊</router-link>
+        <router-link to="/OOAD/register" class="underline text-blue-500"
+          >還沒有帳號？註冊</router-link
+        >
       </div>
     </div>
   </div>

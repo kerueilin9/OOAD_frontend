@@ -1,5 +1,4 @@
-import api from "@/api/api"; // 路徑看你放哪裡
-// or 相對路徑 import api from "../api"
+import api from "@/api/api";
 
 interface Transaction {
   date: string;
@@ -37,9 +36,15 @@ async function getTransactionList(params: TransactionFilter | {}) {
   return res;
 }
 
+async function getTransactionChart() {
+  const res = await api.get("/transaction/six-months-summary");
+  return res;
+}
+
 export {
   getTransactionList,
   addTransaction,
   editTransaction,
   deleteTransaction,
+  getTransactionChart,
 };

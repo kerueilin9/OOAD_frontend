@@ -13,7 +13,10 @@
         @submit.prevent="handleSubmit"
       >
         <n-form-item path="username">
-          <n-input v-model:value="formValue.username" placeholder="請輸入使用者名稱">
+          <n-input
+            v-model:value="formValue.username"
+            placeholder="請輸入使用者名稱"
+          >
             <template #prefix>
               <n-icon size="18" color="#808695">
                 <PersonOutline />
@@ -69,7 +72,9 @@
         註冊
       </n-button>
       <div class="mt-4 text-center">
-        <router-link to="/OOAD/login" class="underline text-blue-500">已有帳號？登入</router-link>
+        <router-link to="/OOAD/login" class="underline text-blue-500"
+          >已有帳號？登入</router-link
+        >
       </div>
     </div>
   </div>
