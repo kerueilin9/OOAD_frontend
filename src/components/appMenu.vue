@@ -2,7 +2,12 @@
 <script setup lang="ts">
 import { h, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { BookOutline, HomeOutline, SettingsOutline } from "@vicons/ionicons5";
+import {
+  BookOutline,
+  HomeOutline,
+  SettingsOutline,
+  SparklesOutline,
+} from "@vicons/ionicons5";
 import { NIcon } from "naive-ui";
 
 const router = useRouter();
@@ -18,6 +23,11 @@ const menuOptions = [
     label: "帳務報表",
     key: "report",
     icon: () => h(NIcon, null, { default: () => h(BookOutline) }),
+  },
+  {
+    label: "AI 理財建議",
+    key: "ai-advice",
+    icon: () => h(NIcon, null, { default: () => h(SparklesOutline) }),
   },
   {
     label: "設定",

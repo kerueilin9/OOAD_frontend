@@ -88,6 +88,41 @@
             >
           </n-form-item>
         </n-form>
+        <!-- 圖表區域 -->
+        <n-collapse :default-expanded-names="['chart']" class="chart-collapse">
+          <n-collapse-item title="六個月統計圖表" name="chart">
+            <template #header-extra>
+              <n-icon size="20">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm5-18v4h3V3h-3z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </n-icon>
+            </template>
+            <n-card :bordered="false" class="chart-content">
+              <n-tabs type="line" animated>
+                <n-tab-pane name="monthly" tab="月度收支統計">
+                  <EchartsComponent
+                    :option="monthlyChartOption"
+                    height="400px"
+                  />
+                </n-tab-pane>
+                <n-tab-pane name="category" tab="分類統計">
+                  <EchartsComponent
+                    :option="categoryChartOption"
+                    height="400px"
+                  />
+                </n-tab-pane>
+              </n-tabs>
+            </n-card>
+          </n-collapse-item>
+        </n-collapse>
 
         <!-- 交易列表 -->
         <n-data-table
@@ -96,18 +131,6 @@
           :pagination="pagination"
           :loading="loading"
         />
-
-        <!-- 圖表區域 -->
-        <n-card title="六個月統計圖表" :bordered="false" class="chart-card">
-          <n-tabs type="line" animated>
-            <n-tab-pane name="monthly" tab="月度收支統計">
-              <EchartsComponent :option="monthlyChartOption" height="400px" />
-            </n-tab-pane>
-            <n-tab-pane name="category" tab="分類統計">
-              <EchartsComponent :option="categoryChartOption" height="400px" />
-            </n-tab-pane>
-          </n-tabs>
-        </n-card>
       </n-space>
     </n-card>
   </div>
@@ -508,5 +531,40 @@ onMounted(async () => {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-collapse {
+  margin-top: 24px;
+}
+
+.chart-collapse :deep(.n-collapse-item) {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.chart-collapse :deep(.n-collapse-item__header) {
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #fafafa;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chart-collapse :deep(.n-collapse-item__content-wrapper) {
+  border-radius: 0 0 8px 8px;
+}
+
+.chart-collapse :deep(.n-collapse-item__content-inner) {
+  padding: 0;
+}
+
+.chart-content {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 </style>

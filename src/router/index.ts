@@ -63,6 +63,15 @@ export const HomeRoute: RouteRecordRaw = {
       },
     },
     {
+      path: "ai-advice",
+      name: "ai-advice",
+      component: () => import("@/views/aiAdvice.vue"),
+      meta: {
+        title: "AI 理財建議",
+        requiresAuth: true,
+      },
+    },
+    {
       path: "settings",
       name: "settings",
       component: () => import("@/views/settings.vue"),
