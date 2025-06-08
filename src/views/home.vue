@@ -294,7 +294,7 @@ const handleSubmit = async () => {
     };
 
     const res = await addTransaction(payload);
-    data.value.push(res.data);
+    data.value.push(res.data.transaction);
     message.success("交易新增成功");
   } catch (err) {
     console.log(err);

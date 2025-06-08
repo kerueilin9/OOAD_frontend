@@ -159,7 +159,7 @@ const handleSubmit = async () => {
     };
 
     const res = await editTransaction(transactionData.value.id, payload);
-    props.updateData(res.data);
+    props.updateData(res.data.transaction);
     message.success("交易編輯成功");
     showModal.value = false;
   } catch (err) {
