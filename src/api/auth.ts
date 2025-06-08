@@ -5,4 +5,9 @@ async function login(params: object) {
   return res;
 }
 
-export { login };
+async function register(params: object) {
+  const res = await axios.post("http://localhost:8080/auth/register", params);
+  return res;
+}
+
+export { login, register };

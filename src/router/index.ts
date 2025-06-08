@@ -30,6 +30,16 @@ export const LoginRoute: RouteRecordRaw = {
   },
 };
 
+export const RegisterRoute: RouteRecordRaw = {
+  path: `${path}/register`,
+  name: "Register",
+  component: () => import("@/views/register.vue"),
+  meta: {
+    title: "註冊",
+    public: true,
+  },
+};
+
 export const HomeRoute: RouteRecordRaw = {
   path: path,
   component: DefaultLayout,
@@ -82,6 +92,7 @@ export const constantRouter: RouteRecordRaw[] = [
   HomeRoute,
   RootRoute,
   TestRoute,
+  RegisterRoute,
 ];
 
 const router = createRouter({
