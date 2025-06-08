@@ -90,7 +90,7 @@
         </n-form>
         <!-- 圖表區域 -->
         <n-collapse :default-expanded-names="['chart']" class="chart-collapse">
-          <n-collapse-item title="六個月統計圖表" name="chart">
+          <n-collapse-item title="統計圖表" name="chart">
             <template #header-extra>
               <n-icon size="20">
                 <svg
@@ -113,9 +113,15 @@
                     height="400px"
                   />
                 </n-tab-pane>
-                <n-tab-pane name="category" tab="分類統計">
+                <n-tab-pane name="income-category" tab="收入分類統計">
                   <EchartsComponent
-                    :option="categoryChartOption"
+                    :option="incomeCategoryChartOption"
+                    height="400px"
+                  />
+                </n-tab-pane>
+                <n-tab-pane name="expense-category" tab="支出分類統計">
+                  <EchartsComponent
+                    :option="expenseCategoryChartOption"
                     height="400px"
                   />
                 </n-tab-pane>
@@ -203,6 +209,12 @@ const columns: DataTableColumns<Transaction> = [
     title: "日期",
     key: "date",
     width: 120,
+    defaultSortOrder: "descend" as any,
+    sorter: (rowA: Transaction, rowB: Transaction) => {
+      const dateA = new Date(rowA.date).getTime();
+      const dateB = new Date(rowB.date).getTime();
+      return dateA - dateB;
+    },
   },
   {
     title: "描述",
@@ -351,18 +363,20 @@ const categories = computed(() => {
 });
 
 // 圖表配置
-const categoryChartOption = computed(() => {
-  // 統計各分類的金額
+const incomeCategoryChartOption = computed(() => {
+  // 統計收入各分類的金額
   const categoryStats: { [key: string]: number } = {};
 
-  filteredTransactions.value.forEach((transaction) => {
-    const categoryName =
-      CategoryMap.get(transaction.category) || transaction.category;
-    if (!categoryStats[categoryName]) {
-      categoryStats[categoryName] = 0;
-    }
-    categoryStats[categoryName] += transaction.amount;
-  });
+  filteredTransactions.value
+    .filter((transaction) => transaction.type === "INCOME")
+    .forEach((transaction) => {
+      const categoryName =
+        CategoryMap.get(transaction.category) || transaction.category;
+      if (!categoryStats[categoryName]) {
+        categoryStats[categoryName] = 0;
+      }
+      categoryStats[categoryName] += transaction.amount;
+    });
 
   const data = Object.entries(categoryStats).map(([name, value]) => ({
     name,
@@ -371,7 +385,7 @@ const categoryChartOption = computed(() => {
 
   return {
     title: {
-      text: "分類統計",
+      text: "收入分類統計",
       left: "center",
     },
     tooltip: {
@@ -384,10 +398,85 @@ const categoryChartOption = computed(() => {
     },
     series: [
       {
-        name: "金額",
+        name: "收入金額",
         type: "pie",
         radius: "50%",
         data,
+        itemStyle: {
+          color: (params: any) => {
+            const colors = [
+              "#18a058",
+              "#2e7d32",
+              "#1976d2",
+              "#0288d1",
+              "#00796b",
+            ];
+            return colors[params.dataIndex % colors.length];
+          },
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: "rgba(0, 0, 0, 0.5)",
+          },
+        },
+      },
+    ],
+  };
+});
+
+const expenseCategoryChartOption = computed(() => {
+  // 統計支出各分類的金額
+  const categoryStats: { [key: string]: number } = {};
+
+  filteredTransactions.value
+    .filter((transaction) => transaction.type === "EXPENSE")
+    .forEach((transaction) => {
+      const categoryName =
+        CategoryMap.get(transaction.category) || transaction.category;
+      if (!categoryStats[categoryName]) {
+        categoryStats[categoryName] = 0;
+      }
+      categoryStats[categoryName] += transaction.amount;
+    });
+
+  const data = Object.entries(categoryStats).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  return {
+    title: {
+      text: "支出分類統計",
+      left: "center",
+    },
+    tooltip: {
+      trigger: "item",
+      formatter: "{a} <br/>{b}: {c} ({d}%)",
+    },
+    legend: {
+      orient: "vertical",
+      left: "left",
+    },
+    series: [
+      {
+        name: "支出金額",
+        type: "pie",
+        radius: "50%",
+        data,
+        itemStyle: {
+          color: (params: any) => {
+            const colors = [
+              "#d32f2f",
+              "#f57c00",
+              "#7b1fa2",
+              "#c2185b",
+              "#5d4037",
+            ];
+            return colors[params.dataIndex % colors.length];
+          },
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -534,7 +623,7 @@ onMounted(async () => {
 }
 
 .chart-collapse {
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
 .chart-collapse :deep(.n-collapse-item) {
@@ -545,7 +634,7 @@ onMounted(async () => {
 }
 
 .chart-collapse :deep(.n-collapse-item__header) {
-  padding: 16px 24px;
+  padding: 8px 24px;
   font-size: 16px;
   font-weight: 600;
   background-color: #fafafa;

@@ -215,6 +215,12 @@ const columns: DataTableColumns<Transaction> = [
   {
     title: "日期",
     key: "date",
+    defaultSortOrder: "descend" as any,
+    sorter: (rowA: Transaction, rowB: Transaction) => {
+      const dateA = new Date(rowA.date).getTime();
+      const dateB = new Date(rowB.date).getTime();
+      return dateA - dateB;
+    },
   },
   {
     title: "收支類型",
