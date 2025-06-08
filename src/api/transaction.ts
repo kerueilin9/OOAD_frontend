@@ -41,10 +41,30 @@ async function getTransactionChart() {
   return res;
 }
 
+async function downloadTransactionCsv(params: TransactionFilter | {}) {
+  const res = await api.post("/csv/download", params, {
+    responseType: "blob",
+  });
+  return res;
+}
+
+async function uploadTransactionCsv(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post("/csv/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res;
+}
+
 export {
   getTransactionList,
   addTransaction,
   editTransaction,
   deleteTransaction,
   getTransactionChart,
+  downloadTransactionCsv,
+  uploadTransactionCsv,
 };

@@ -88,6 +88,42 @@
                   新增交易
                 </n-button>
               </n-card>
+              <n-card
+                title="交易匯出/入"
+                :bordered="false"
+                class="import-export-card"
+              >
+                <n-space vertical :size="12">
+                  <n-button
+                    type="info"
+                    block
+                    @click="handleExport"
+                    :loading="exportLoading"
+                  >
+                    <template #icon>
+                      <n-icon>
+                        <DownloadOutline />
+                      </n-icon>
+                    </template>
+                    匯出 CSV
+                  </n-button>
+                  <n-button type="warning" block @click="triggerFileInput">
+                    <template #icon>
+                      <n-icon>
+                        <CloudUploadOutline />
+                      </n-icon>
+                    </template>
+                    匯入 CSV
+                  </n-button>
+                  <input
+                    ref="fileInputRef"
+                    type="file"
+                    accept=".csv"
+                    style="display: none"
+                    @change="handleFileSelected"
+                  />
+                </n-space>
+              </n-card>
             </n-space>
           </n-grid-item>
 
@@ -120,11 +156,14 @@ import { useRouter } from "vue-router";
 import { FormInst, FormRules, NButton, NTag, useMessage } from "naive-ui";
 import { ref, computed, onMounted, h } from "vue";
 import type { DataTableColumns } from "naive-ui";
+import { DownloadOutline, CloudUploadOutline } from "@vicons/ionicons5";
 import { CategoryMap } from "@/enums/categoryEnum";
 import {
   addTransaction,
   deleteTransaction,
   getTransactionList,
+  downloadTransactionCsv,
+  uploadTransactionCsv,
 } from "@/api/transaction";
 import EditTransactionModal from "@/components/editTransactionModal.vue";
 import {
@@ -139,6 +178,8 @@ const submitLoading = ref(false);
 const data = ref<Transaction[]>([]);
 const isShowModal = ref(false);
 const transactionData = ref<Transaction | null>(null);
+const exportLoading = ref(false);
+const fileInputRef = ref<HTMLInputElement>();
 
 interface Transaction {
   id: number;
@@ -362,6 +403,71 @@ const removeTransaction = async (id: number) => {
   }
 };
 
+const handleExport = async () => {
+  try {
+    exportLoading.value = true;
+    const res = await downloadTransactionCsv({});
+
+    // 創建下載鏈接
+    const blob = new Blob([res.data], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `transactions_${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    message.success("CSV 匯出成功");
+  } catch (err) {
+    console.error("匯出失敗:", err);
+    message.error("匯出失敗，請稍後再試");
+  } finally {
+    exportLoading.value = false;
+  }
+};
+
+const triggerFileInput = () => {
+  fileInputRef.value?.click();
+};
+
+const handleFileSelected = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!file.name.endsWith(".csv")) {
+    message.error("請選擇 CSV 格式的檔案");
+    return;
+  }
+
+  try {
+    console.log("開始上傳檔案:", file.name);
+    const res = await uploadTransactionCsv(file);
+    console.log("上傳回應:", res);
+
+    message.success("CSV 匯入成功");
+
+    // 重新載入交易數據
+    const updatedRes = await getTransactionList({});
+    data.value = updatedRes.data;
+
+    // 清空文件輸入
+    if (fileInputRef.value) {
+      fileInputRef.value.value = "";
+    }
+  } catch (err) {
+    console.error("匯入失敗:", err);
+    message.error("匯入失敗，請檢查檔案格式是否正確");
+  }
+};
+
 const isSmallScreen = ref(false);
 
 onMounted(async () => {
@@ -405,6 +511,12 @@ const isMobile = computed(() => isSmallScreen.value);
 }
 
 .form-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.import-export-card {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

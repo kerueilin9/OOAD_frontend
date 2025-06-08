@@ -83,9 +83,21 @@
             </div>
           </n-form-item>
           <n-form-item label="-" class="max-w-lg" label-style="font-size: 0">
-            <n-button type="primary" @click="handleFilter" class="ml-2"
-              >篩選</n-button
-            >
+            <n-space>
+              <n-button type="primary" @click="handleFilter"> 篩選 </n-button>
+              <n-button
+                type="info"
+                @click="handleExport"
+                :loading="exportLoading"
+              >
+                <template #icon>
+                  <n-icon>
+                    <DownloadOutline />
+                  </n-icon>
+                </template>
+                匯出 CSV
+              </n-button>
+            </n-space>
           </n-form-item>
         </n-form>
         <!-- 圖表區域 -->
@@ -150,7 +162,8 @@
 <script setup lang="ts">
 import { ref, h, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { NTag, NButton, useMessage } from "naive-ui";
+import { NTag, NButton, NIcon, useMessage } from "naive-ui";
+import { DownloadOutline } from "@vicons/ionicons5";
 import type { DataTableColumns } from "naive-ui";
 import {
   consumptionCategories,
@@ -162,6 +175,8 @@ import {
   deleteTransaction,
   getTransactionList,
   getTransactionChart,
+  downloadTransactionCsv,
+  uploadTransactionCsv,
 } from "@/api/transaction";
 import { CategoryMap } from "@/enums/categoryEnum";
 
@@ -169,6 +184,8 @@ const router = useRouter();
 const message = useMessage();
 const isShowModal = ref(false);
 const transactionData = ref<Transaction | null>(null);
+const exportLoading = ref(false);
+const importLoading = ref(false);
 
 interface Transaction {
   id: number;
@@ -351,6 +368,36 @@ const removeTransaction = async (id: number) => {
   } catch (err) {
     console.log(err);
   }
+};
+
+const handleExport = async () => {
+  exportLoading.value = true;
+  try {
+    const payload = {
+      ...filterForm.value,
+    };
+
+    const response = await downloadTransactionCsv(payload);
+
+    // 創建下載連結
+    const blob = new Blob([response.data], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `transactions_${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    message.success("CSV 匯出成功");
+  } catch (error) {
+    console.error("匯出失敗:", error);
+    message.error("匯出失敗");
+  }
+  exportLoading.value = false;
 };
 
 const categories = computed(() => {
