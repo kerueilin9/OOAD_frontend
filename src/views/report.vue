@@ -147,7 +147,7 @@ interface Transaction {
   note: string;
   amount: number;
   category: string;
-  date: Date;
+  date: string;
 }
 
 const filterFormRef = ref();

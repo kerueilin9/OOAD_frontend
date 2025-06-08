@@ -23,6 +23,15 @@
               style="width: 100%"
             />
           </n-form-item>
+          <n-form-item path="date">
+            <n-date-picker
+              v-model:formatted-value="basicForm.date"
+              type="date"
+              placeholder="選擇日期"
+              style="width: 100%"
+              value-format="yyyy-MM-dd"
+            />
+          </n-form-item>
           <n-form-item path="type">
             <n-radio-group
               v-model:value="basicForm.type"
@@ -97,7 +106,7 @@ const props = defineProps<{
 
 interface Transaction {
   id: number;
-  date: Date;
+  date: string;
   note: string;
   amount: number;
   type: "INCOME" | "EXPENSE";
@@ -109,6 +118,7 @@ const initialBasicForm = {
   category: null,
   type: null,
   note: null,
+  date: new Date().toISOString().split("T")[0],
 };
 
 const basicForm = ref<{
@@ -116,6 +126,7 @@ const basicForm = ref<{
   category: string | null;
   type: "INCOME" | "EXPENSE" | null;
   note: string | null;
+  date: string;
 }>({ ...initialBasicForm });
 
 const basicRules: FormRules = {
@@ -141,6 +152,17 @@ const basicRules: FormRules = {
       return Promise.resolve();
     },
   },
+  date: {
+    required: true,
+    trigger: ["blur", "input", "change"],
+    type: "string",
+    validator: (rule, value: string) => {
+      if (!value) {
+        return Promise.reject("請選擇日期");
+      }
+      return Promise.resolve();
+    },
+  },
 };
 
 const categories = computed(() => {
@@ -153,9 +175,16 @@ const handleSubmit = async () => {
   try {
     await basicFormRef.value.validate();
     submitLoading.value = true;
+
+    // 確保日期格式正確
+    let dateValue = basicForm.value.date;
+    if (typeof dateValue !== "string") {
+      dateValue = new Date().toISOString().split("T")[0];
+    }
+
     const payload = {
-      date: new Date().toISOString().split("T")[0],
       ...basicForm.value,
+      date: dateValue,
     };
 
     const res = await editTransaction(transactionData.value.id, payload);
@@ -176,6 +205,7 @@ watch(showModal, (val) => {
         category: transactionData.value.category,
         type: transactionData.value.type,
         note: transactionData.value.note,
+        date: transactionData.value.date,
       };
     }
   }

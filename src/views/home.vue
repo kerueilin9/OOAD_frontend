@@ -34,6 +34,15 @@
                       style="width: 100%"
                     />
                   </n-form-item>
+                  <n-form-item path="date">
+                    <n-date-picker
+                      v-model:formatted-value="basicForm.date"
+                      type="date"
+                      placeholder="選擇日期"
+                      style="width: 100%"
+                      value-format="yyyy-MM-dd"
+                    />
+                  </n-form-item>
                   <n-form-item path="type">
                     <n-radio-group
                       v-model:value="basicForm.type"
@@ -133,7 +142,7 @@ const transactionData = ref<Transaction | null>(null);
 
 interface Transaction {
   id: number;
-  date: Date;
+  date: string;
   note: string;
   amount: number;
   type: "INCOME" | "EXPENSE";
@@ -145,12 +154,14 @@ const initialBasicForm = {
   category: null,
   type: "EXPENSE" as const,
   note: null,
+  date: new Date().toISOString().split("T")[0],
 };
 const basicForm = ref<{
   amount: number | null;
   category: string | null;
   type: "INCOME" | "EXPENSE" | null;
   note: string | null;
+  date: string;
 }>({ ...initialBasicForm });
 
 const basicRules: FormRules = {
@@ -161,6 +172,17 @@ const basicRules: FormRules = {
     validator: (rule, value: number) => {
       if (value === null || value === undefined || value === 0) {
         return Promise.reject("不能為0");
+      }
+      return Promise.resolve();
+    },
+  },
+  date: {
+    required: true,
+    trigger: ["blur", "input", "change"],
+    type: "string",
+    validator: (rule, value: string) => {
+      if (value === null || value === undefined || value === "") {
+        return Promise.reject("必填");
       }
       return Promise.resolve();
     },
@@ -288,16 +310,34 @@ const handleSubmit = async () => {
   try {
     await basicFormRef.value.validate();
     submitLoading.value = true;
+
+    // 確保日期格式正確
+    const dateValue = basicForm.value.date;
+    let formattedDate = dateValue;
+
+    // 如果是時間戳，轉換為日期字符串
+    if (typeof dateValue === "number") {
+      formattedDate = new Date(dateValue).toISOString().split("T")[0];
+    } else if (typeof dateValue === "string" && dateValue.includes("T")) {
+      formattedDate = dateValue.split("T")[0];
+    }
+
     const payload = {
-      date: new Date().toISOString().split("T")[0],
       ...basicForm.value,
+      date: formattedDate,
     };
 
     const res = await addTransaction(payload);
     data.value.push(res.data.transaction);
     message.success("交易新增成功");
+
+    // 重置表單
+    basicForm.value = { ...initialBasicForm };
   } catch (err) {
     console.log(err);
+    message.error("新增失敗，請檢查輸入內容");
+  } finally {
+    submitLoading.value = false;
   }
 };
 
